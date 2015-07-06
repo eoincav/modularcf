@@ -1,0 +1,70 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "Child Template that creates a subnet",
+
+  "Parameters" : {
+      "CreatorTag" : {
+	  "Type" : "String"
+      },
+      "SubnetCidr" : {
+	  "Type" : "String"
+      },
+      "VpcId" : {
+	  "Type" : "AWS::EC2::VPC::Id"
+      },
+      "AZ" :{
+	  "Type" : "String"
+      },
+      "SubnetTier" : {
+	  "Type" : "String"
+      },
+      "Lifecycle" : {
+	  "Type" : "String"
+      }
+  },
+
+  "Resources" : {
+      "Subnet"         : {
+          "Type" : "AWS::EC2::Subnet",
+          "Properties" : {
+	      "AvailabilityZone" :    { "Ref" : "AZ" },
+	      "CidrBlock"        :    { "Ref" : "SubnetCidr" },
+	      "MapPublicIpOnLaunch" : "False",
+	      "VpcId"            :    { "Ref" : "VpcId" },
+              "Tags"      : [
+                  {
+                      "Key" : "Application",
+                      "Value" : {
+                          "Ref" : "AWS::StackName"
+                      }
+                  },
+		  {
+		      "Key" : "Creator",
+		      "Value" : { "Ref" : "CreatorTag" }
+		  },
+		  {
+		      "Key" : "Name",
+		      "Value" : { "Fn::Join" : [" ", [{ "Ref" : "SubnetTier"},  { "Ref" : "Lifecycle" }, { "Ref" : "AZ" } ]] }
+		  },
+		  {
+		      "Key" : "Tier",
+		      "Value" : { "Ref" : "SubnetTier" } 
+		  },
+		  {
+		      "Key" : "Lifecycle",
+		      "Value" : { "Ref" : "Lifecycle" }
+		  }
+              ]
+          }
+      }
+  },
+
+  "Outputs": {
+      "SubnetID" : {
+	  "Description" : "The ID of the created subnet",
+	  "Value"       : { "Ref" : "Subnet" }
+      }
+  }
+}
+
+ 

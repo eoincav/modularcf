@@ -1,0 +1,58 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "Creates the initial VPC",
+
+  "Parameters" : {
+      "CreatorTag" : {
+	  "Type" : "String"
+      },
+      "VpcCidr" : {
+	  "Type" : "String"
+      },
+      "Lifecycle" : {
+	  "Type" : "String"
+      }
+  },
+
+  "Resources" : {
+      "VPC": {
+          "Type" : "AWS::EC2::VPC",
+          "Properties" : {
+              "CidrBlock" : { "Ref" : "VpcCidr" },
+              "Tags"      : [
+                  {
+                      "Key" : "Application",
+                      "Value" : {
+                          "Ref" : "AWS::StackName"
+                      }
+                  },
+		  {
+		      "Key" : "Lifecycle",
+		      "Value" : { "Ref" : "Lifecycle" }
+		  },
+                  {
+                      "Key" : "Network",
+                      "Value" : "Public"
+                  },
+		  {
+		      "Key" : "Creator",
+		      "Value" : { "Ref" : "CreatorTag" }
+		  },
+		  {
+		      "Key" : "Name",
+		      "Value" : { "Fn::Join" : [" ", [{ "Ref" : "Lifecycle" }, "VPC"]] }
+		  }
+              ]
+          }
+      }
+  },
+
+  "Outputs": {
+      "VpcId" : {
+	  "Description" : "The ID of the created VPC",
+	  "Value"       : { "Ref" : "VPC" }
+      }
+  }
+}
+
+ 

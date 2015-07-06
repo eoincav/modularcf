@@ -1,0 +1,22 @@
+[
+  {
+    "ParameterKey": "CreatorIn",
+    "ParameterValue": "Eoin.Cavanagh"
+  }, 
+  {
+    "ParameterKey": "AZIn",
+    "ParameterValue": "eu-west-1a"
+  },
+  {
+    "ParameterKey": "VpcCidrIn",
+    "ParameterValue": "10.93.0.0/16"
+  },
+  {
+    "ParameterKey": "LifecycleIn",
+    "ParameterValue": "Development"
+  },
+  {
+    "ParameterKey": "SubnetBlocksIn",
+    "ParameterValue": "10.93.10.0/24,10.93.20.0/24,10.93.30.0/24,10.93.40.0/24,10.93.90.0/24"
+  }	
+]

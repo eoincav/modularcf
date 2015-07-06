@@ -1,0 +1,130 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "Parent template - creates VPC and multiple Subnets",
+
+  "Parameters" : {
+      "CreatorIn" : {
+	  "Type" : "String",
+	  "Default" : "Unspecified",
+	  "Description" : "Tag for creator name"
+      },
+      "VpcCidrIn" : {
+	  "Type"        : "String",
+	  "Description" : "CIDR Mask for the VPC being created",
+	  "Default"     : "10.93.0.0/16"
+      },
+     "SubnetBlocksIn": {
+	 "Type": "CommaDelimitedList",
+	 "Description": "Comma-delimited list of CIDR blocks (web proxy, web, app, DB, mgt)",
+	 "Default": "10.93.10.0/24,10.93.20.0/24,10.93.30.0/24,10.93.40.0/24,10.93.50.0/24"
+     },
+     "AZIn":{
+	 "Type": "String",
+	 "Description": "The AZ in which the resources are created",
+	 "Default": "eu-west-1a"
+     },
+     "LifecycleIn" : {
+	 "Type": "String",
+	 "Description": "The Lifecycle stage of the VPC e.g. Development, Staging, Production", 
+	 "Default": "Development"
+      }
+  },
+
+  "Resources" : {
+      "ChildVPC" : {
+	  "Type" : "AWS::CloudFormation::Stack",
+	  "Properties" : {
+	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-xxxxxxxxxxxxx-eu-west-1/MMX-child-VPC.json",
+	      "Parameters" : {
+		  "CreatorTag"  : { "Ref" : "CreatorIn" },
+		  "VpcCidr"     : { "Ref" : "VpcCidrIn" },
+		  "Lifecycle"   : { "Ref" : "LifecycleIn" }
+	      },
+	      "TimeoutInMinutes" : "10"
+	  }
+      },
+
+      "ChildWebProxyTier" : {
+	  "Type" : "AWS::CloudFormation::Stack",
+	  "Properties" : {
+	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-xxxxxxxxxxxxx-eu-west-1/MMX-child-subnet.json",
+	      "Parameters" : {
+		  "CreatorTag"    : { "Ref" : "CreatorIn" },
+		  "SubnetCidr"    : { "Fn::Select" : [ "0", {"Ref": "SubnetBlocksIn"} ] },
+		  "VpcId"         : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.VpcId" ] },
+		  "AZ"            : { "Ref" : "AZIn" },
+		  "Lifecycle"     : { "Ref" : "LifecycleIn" },
+		  "SubnetTier"    : "WebProxy"
+	      },
+	      "TimeoutInMinutes" : "10"
+	  }
+      },
+
+      "ChildWebTier" : {
+	  "Type" : "AWS::CloudFormation::Stack",
+	  "Properties" : {
+	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-xxxxxxxxxxxxx-eu-west-1/MMX-child-subnet.json",
+	      "Parameters" : {
+		  "CreatorTag"    : { "Ref" : "CreatorIn" },
+		  "SubnetCidr"    : { "Fn::Select" : [ "1", {"Ref": "SubnetBlocksIn"} ] },
+		  "VpcId"         : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.VpcId" ] },
+		  "AZ"            : { "Ref" : "AZIn" },
+		  "Lifecycle"     : { "Ref" : "LifecycleIn" },
+		  "SubnetTier"    : "Web"
+	      },
+	      "TimeoutInMinutes" : "10"
+	  }
+      },
+
+      "ChildAppTier" : {
+	  "Type" : "AWS::CloudFormation::Stack",
+	  "Properties" : {
+	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-xxxxxxxxxxxxx-eu-west-1/MMX-child-subnet.json",
+	      "Parameters" : {
+		  "CreatorTag"    : { "Ref" : "CreatorIn" },
+		  "SubnetCidr"    : { "Fn::Select" : [ "2", {"Ref": "SubnetBlocksIn"} ] },
+		  "VpcId"         : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.VpcId" ] },
+		  "AZ"            : { "Ref" : "AZIn" },
+		  "Lifecycle"     : { "Ref" : "LifecycleIn" },
+		  "SubnetTier"    : "App"
+	      },
+	      "TimeoutInMinutes" : "10"
+	  }
+      },
+
+      "ChildDbTier" : {
+	  "Type" : "AWS::CloudFormation::Stack",
+	  "Properties" : {
+	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-xxxxxxxxxxxxx-eu-west-1/MMX-child-subnet.json",
+	      "Parameters" : {
+		  "CreatorTag"    : { "Ref" : "CreatorIn" },
+		  "SubnetCidr"    : { "Fn::Select" : [ "3", {"Ref": "SubnetBlocksIn"} ] },
+		  "VpcId"         : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.VpcId" ] },
+		  "AZ"            : { "Ref" : "AZIn" },
+		  "Lifecycle"     : { "Ref" : "LifecycleIn" },
+		  "SubnetTier"    : "Db"
+	      },
+	      "TimeoutInMinutes" : "10"
+	  }
+      },
+
+
+      "ChildMgtTier" : {
+	  "Type" : "AWS::CloudFormation::Stack",
+	  "Properties" : {
+	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-xxxxxxxxxxxxx-eu-west-1/MMX-child-subnet.json",
+	      "Parameters" : {
+		  "CreatorTag"    : { "Ref" : "CreatorIn" },
+		  "SubnetCidr"    : { "Fn::Select" : [ "4", {"Ref": "SubnetBlocksIn"} ] },
+		  "VpcId"         : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.VpcId" ] },
+		  "AZ"            : { "Ref" : "AZIn" },
+		  "Lifecycle"     : { "Ref" : "LifecycleIn" },
+		  "SubnetTier"    : "Mgt"
+	      },
+	      "TimeoutInMinutes" : "10"
+	  }
+      }
+  }
+}
+
