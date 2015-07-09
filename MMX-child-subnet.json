@@ -20,6 +20,9 @@
       },
       "Lifecycle" : {
 	  "Type" : "String"
+      },
+      "RouteTableId" :{
+	  "Type" : "String"
       }
   },
 
@@ -56,11 +59,18 @@
 		  }
               ]
           }
+      },
+      "SubnetRouteTableAssociation": {
+	  "Type": "AWS::EC2::SubnetRouteTableAssociation",
+	  "Properties": {
+	      "RouteTableId": {"Ref": "RouteTableId"},
+	      "SubnetId": {"Ref": "Subnet"}
+	  }   
       }
   },
 
   "Outputs": {
-      "SubnetID" : {
+      "SubnetId" : {
 	  "Description" : "The ID of the created subnet",
 	  "Value"       : { "Ref" : "Subnet" }
       }

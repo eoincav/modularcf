@@ -28,6 +28,20 @@
 	 "Type": "String",
 	 "Description": "The Lifecycle stage of the VPC e.g. Development, Staging, Production", 
 	 "Default": "Development"
+      },
+      "WebKeyPairNameIn" : {
+	  "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+	  "Type": "AWS::EC2::KeyPair::KeyName",
+	  "ConstraintDescription" : "Can contain only ASCII characters."
+      },
+      "SSHLocationIn" : {
+	  "Description" : "The IP address range that can be used to SSH to the EC2 instances",
+	  "Type": "String",
+	  "MinLength": "9",
+	  "MaxLength": "18",
+	  "Default": "0.0.0.0/0",
+	  "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+	  "ConstraintDescription": "Must be a valid IP CIDR range of the form x.x.x.x/x"
       }
   },
 
@@ -35,7 +49,7 @@
       "ChildVPC" : {
 	  "Type" : "AWS::CloudFormation::Stack",
 	  "Properties" : {
-	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-xxxxxxxxxxxxx-eu-west-1/MMX-child-VPC.json",
+	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-13s3goy6a5pg9-eu-west-1/MMX-child-VPC.json",
 	      "Parameters" : {
 		  "CreatorTag"  : { "Ref" : "CreatorIn" },
 		  "VpcCidr"     : { "Ref" : "VpcCidrIn" },
@@ -48,14 +62,15 @@
       "ChildWebProxyTier" : {
 	  "Type" : "AWS::CloudFormation::Stack",
 	  "Properties" : {
-	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-xxxxxxxxxxxxx-eu-west-1/MMX-child-subnet.json",
+	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-13s3goy6a5pg9-eu-west-1/MMX-child-subnet.json",
 	      "Parameters" : {
 		  "CreatorTag"    : { "Ref" : "CreatorIn" },
 		  "SubnetCidr"    : { "Fn::Select" : [ "0", {"Ref": "SubnetBlocksIn"} ] },
 		  "VpcId"         : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.VpcId" ] },
 		  "AZ"            : { "Ref" : "AZIn" },
 		  "Lifecycle"     : { "Ref" : "LifecycleIn" },
-		  "SubnetTier"    : "WebProxy"
+		  "SubnetTier"    : "WebProxy",
+		  "RouteTableId"  : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.InternetRouteTable" ] }
 	      },
 	      "TimeoutInMinutes" : "10"
 	  }
@@ -64,14 +79,15 @@
       "ChildWebTier" : {
 	  "Type" : "AWS::CloudFormation::Stack",
 	  "Properties" : {
-	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-xxxxxxxxxxxxx-eu-west-1/MMX-child-subnet.json",
+	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-13s3goy6a5pg9-eu-west-1/MMX-child-subnet.json",
 	      "Parameters" : {
 		  "CreatorTag"    : { "Ref" : "CreatorIn" },
 		  "SubnetCidr"    : { "Fn::Select" : [ "1", {"Ref": "SubnetBlocksIn"} ] },
 		  "VpcId"         : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.VpcId" ] },
 		  "AZ"            : { "Ref" : "AZIn" },
 		  "Lifecycle"     : { "Ref" : "LifecycleIn" },
-		  "SubnetTier"    : "Web"
+		  "SubnetTier"    : "Web",
+		  "RouteTableId"  : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.InternetRouteTable" ] }
 	      },
 	      "TimeoutInMinutes" : "10"
 	  }
@@ -80,14 +96,15 @@
       "ChildAppTier" : {
 	  "Type" : "AWS::CloudFormation::Stack",
 	  "Properties" : {
-	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-xxxxxxxxxxxxx-eu-west-1/MMX-child-subnet.json",
+	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-13s3goy6a5pg9-eu-west-1/MMX-child-subnet.json",
 	      "Parameters" : {
 		  "CreatorTag"    : { "Ref" : "CreatorIn" },
 		  "SubnetCidr"    : { "Fn::Select" : [ "2", {"Ref": "SubnetBlocksIn"} ] },
 		  "VpcId"         : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.VpcId" ] },
 		  "AZ"            : { "Ref" : "AZIn" },
 		  "Lifecycle"     : { "Ref" : "LifecycleIn" },
-		  "SubnetTier"    : "App"
+		  "SubnetTier"    : "App",
+		  "RouteTableId"  : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.PrivateRouteTable" ] }
 	      },
 	      "TimeoutInMinutes" : "10"
 	  }
@@ -96,14 +113,15 @@
       "ChildDbTier" : {
 	  "Type" : "AWS::CloudFormation::Stack",
 	  "Properties" : {
-	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-xxxxxxxxxxxxx-eu-west-1/MMX-child-subnet.json",
+	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-13s3goy6a5pg9-eu-west-1/MMX-child-subnet.json",
 	      "Parameters" : {
 		  "CreatorTag"    : { "Ref" : "CreatorIn" },
 		  "SubnetCidr"    : { "Fn::Select" : [ "3", {"Ref": "SubnetBlocksIn"} ] },
 		  "VpcId"         : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.VpcId" ] },
 		  "AZ"            : { "Ref" : "AZIn" },
 		  "Lifecycle"     : { "Ref" : "LifecycleIn" },
-		  "SubnetTier"    : "Db"
+		  "SubnetTier"    : "Db",
+		  "RouteTableId"  : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.PrivateRouteTable" ] }
 	      },
 	      "TimeoutInMinutes" : "10"
 	  }
@@ -113,14 +131,34 @@
       "ChildMgtTier" : {
 	  "Type" : "AWS::CloudFormation::Stack",
 	  "Properties" : {
-	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-xxxxxxxxxxxxx-eu-west-1/MMX-child-subnet.json",
+	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-13s3goy6a5pg9-eu-west-1/MMX-child-subnet.json",
 	      "Parameters" : {
 		  "CreatorTag"    : { "Ref" : "CreatorIn" },
 		  "SubnetCidr"    : { "Fn::Select" : [ "4", {"Ref": "SubnetBlocksIn"} ] },
 		  "VpcId"         : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.VpcId" ] },
 		  "AZ"            : { "Ref" : "AZIn" },
 		  "Lifecycle"     : { "Ref" : "LifecycleIn" },
-		  "SubnetTier"    : "Mgt"
+		  "SubnetTier"    : "Mgt",
+		  "RouteTableId"  : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.PrivateRouteTable" ] }
+	      },
+	      "TimeoutInMinutes" : "10"
+	  }
+      },
+
+
+      "ChildWebServer1" : {
+	  "Type" : "AWS::CloudFormation::Stack",
+	  "DependsOn" : "ChildWebTier",
+	  "Properties" : {
+	      "TemplateURL" : "https://s3-eu-west-1.amazonaws.com/cf-templates-13s3goy6a5pg9-eu-west-1/MMX-child-apache-instance.json",
+	      "Parameters" : {
+		  "CreatorTag"    : { "Ref" : "CreatorIn" },
+		  "AZ"            : { "Ref" : "AZIn" },
+		  "VpcId"         : { "Fn::GetAtt" : [ "ChildVPC", "Outputs.VpcId" ] },
+		  "Lifecycle"     : { "Ref" : "LifecycleIn" },
+		  "SubnetId"      : { "Fn::GetAtt" : [ "ChildWebTier", "Outputs.SubnetId" ] },
+		  "SSHLocation"   : { "Ref" : "SSHLocationIn" },
+		  "KeyName"       : { "Ref" : "WebKeyPairNameIn"}
 	      },
 	      "TimeoutInMinutes" : "10"
 	  }

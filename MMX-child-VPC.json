@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
-  "Description" : "Creates the initial VPC",
+  "Description" : "Creates the initial VPC and an internet route table for use by some subnets",
 
   "Parameters" : {
       "CreatorTag" : {
@@ -44,6 +44,98 @@
 		  }
               ]
           }
+      },
+      "InternetRouteTable" : {
+	  "Type" : "AWS::EC2::RouteTable",
+	  "Properties" : {
+	      "VpcId" : { "Ref" : "VPC" },
+              "Tags"      : [
+                  {
+                      "Key" : "Application",
+                      "Value" : {
+                          "Ref" : "AWS::StackName"
+                      }
+                  },
+		  {
+		      "Key" : "Lifecycle",
+		      "Value" : { "Ref" : "Lifecycle" }
+		  },
+		  {
+		      "Key" : "Creator",
+		      "Value" : { "Ref" : "CreatorTag" }
+		  },
+		  {
+		      "Key" : "Name",
+		      "Value" : { "Fn::Join" : [" ", [{ "Ref" : "Lifecycle" }, "Internet Route Table"]] }
+		  }
+              ]
+	  }	  
+      },
+      "InternetGateway" : {
+	  "Type" : "AWS::EC2::InternetGateway",
+	  "Properties" : {
+              "Tags"   : [
+                  {
+                      "Key" : "Application",
+                      "Value" : {
+                          "Ref" : "AWS::StackName"
+                      }
+                  },
+		  {
+		      "Key" : "Lifecycle",
+		      "Value" : { "Ref" : "Lifecycle" }
+		  },
+		  {
+		      "Key" : "Creator",
+		      "Value" : { "Ref" : "CreatorTag" }
+		  },
+		  {
+		      "Key" : "Name",
+		      "Value" : { "Fn::Join" : [" ", [{ "Ref" : "Lifecycle" }, "Internet Gateway"]] }
+		  }
+              ]
+	  }
+      },
+      "InternetRoute" : {
+          "Type" : "AWS::EC2::Route",
+          "Properties" : {
+	      "RouteTableId" : { "Ref" : "InternetRouteTable" },
+	      "DestinationCidrBlock" : "0.0.0.0/0",
+	      "GatewayId" : { "Ref" : "InternetGateway" }
+          }
+      },
+      "attachInternetGateway": {
+	  "Type": "AWS::EC2::VPCGatewayAttachment",
+	  "Properties": {
+	      "VpcId": {"Ref": "VPC"},
+	      "InternetGatewayId": {"Ref": "InternetGateway"}
+	  }
+      },
+      "PrivateRouteTable" : {
+	  "Type" : "AWS::EC2::RouteTable",
+	  "Properties" : {
+	      "VpcId" : { "Ref" : "VPC" },
+              "Tags"      : [
+                  {
+                      "Key" : "Application",
+                      "Value" : {
+                          "Ref" : "AWS::StackName"
+                      }
+                  },
+		  {
+		      "Key" : "Lifecycle",
+		      "Value" : { "Ref" : "Lifecycle" }
+		  },
+		  {
+		      "Key" : "Creator",
+		      "Value" : { "Ref" : "CreatorTag" }
+		  },
+		  {
+		      "Key" : "Name",
+		      "Value" : { "Fn::Join" : [" ", [{ "Ref" : "Lifecycle" }, "Private Route Table"]] }
+		  }
+              ]
+	  }	  
       }
   },
 
@@ -51,6 +143,14 @@
       "VpcId" : {
 	  "Description" : "The ID of the created VPC",
 	  "Value"       : { "Ref" : "VPC" }
+      },
+      "InternetRouteTable" : {
+	  "Description" : "Internet-facing route table",
+	  "Value"       : { "Ref" : "InternetRouteTable" }
+      },
+      "PrivateRouteTable" : {
+	  "Description" : "Private route table",
+	  "Value"       : { "Ref" : "PrivateRouteTable" }
       }
   }
 }
